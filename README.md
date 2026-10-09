@@ -209,6 +209,7 @@ Failure — `4xx`/`5xx`:
 | `AI_AUTH_FAILED`, `AI_BAD_MODEL`, `AI_BAD_REQUEST` | 502 | Gemini rejected the request                      |
 | `AI_RATE_LIMITED`                               | 429    | Gemini's own quota is exhausted                  |
 | `AI_UNAVAILABLE`, `AI_EMPTY_RESPONSE`           | 502    | Gemini errored or returned nothing               |
+| `AI_TRUNCATED`                                  | 502    | Answer hit the model's output budget             |
 | `FETCH_TIMEOUT`, `AI_TIMEOUT`                   | 504    | Upstream took too long                           |
 
 ### `GET /api/summarize`
@@ -303,6 +304,11 @@ the route and move rate limiting to a shared store first.
   fetch failure or `HTTP 403`.
 - Text is truncated at 12,000 characters before being sent to the model; the
   response sets `truncated: true` and the UI says so.
+- `maxOutputTokens` is set to 3000 because Gemini 3.x draws its reasoning
+  ("thinking") tokens from the same output budget as the answer. At 800 a long
+  page spent 764 tokens reasoning and returned a truncated fragment.
+  `thinkingLevel` is set to `low`, and the request automatically retries without
+  it if a model doesn't support that setting.
 - Summaries are cached by neither layer, so every request re-fetches and re-summarizes.
 
 ## Troubleshooting
